@@ -10,11 +10,25 @@
 // ? SEE DIAGRAM: cpp_diagrams.md #2 -- Step 2 (Placement Phase)
 //
 void counting_sort(std::vector<int>& data) {
-    // TODO: Implement counting sort
-    //   1. Find the min and max values
-    //   2. Create a count array of size (max - min + 1)
-    //   3. Count occurrences of each value
-    //   4. Overwrite data with sorted values using the counts
+    if (data.size() <= 1) return;
+
+    int max_val = *std::max_element(data.begin(), data.end());
+
+    std::vector<int> count(max_val + 1, 0);
+
+    // count
+    for (int num : data) {
+        count[num]++;
+    }
+
+    // overwrite
+    int index = 0;
+    for (int i = 0; i <= max_val; i++) {
+        while (count[i] > 0) {
+            data[index++] = i;
+            count[i]--;
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -25,14 +39,31 @@ void counting_sort(std::vector<int>& data) {
 // ? SEE DIAGRAM: cpp_diagrams.md #4 -- Steps 2-3 (Sort + Concatenate)
 //
 void bucket_sort(std::vector<int>& data, int num_buckets) {
-    // TODO: Implement bucket sort
-    //   1. Find the min and max values to determine bucket ranges
-    //   2. Create num_buckets empty buckets (vectors)
-    //   3. Distribute each element into its bucket
-    //   4. Sort each bucket (use insertion sort or std::sort)
-    //   5. Concatenate all buckets back into data
-}
+    if (data.size() <= 1) return;
 
+    int max_val = *std::max_element(data.begin(), data.end());
+
+    std::vector<std::vector<int>> buckets(num_buckets);
+
+    // distribute
+    for (int num : data) {
+        int index = num * num_buckets / (max_val + 1);
+        buckets[index].push_back(num);
+    }
+
+    // sort buckets
+    for (auto& bucket : buckets) {
+        std::sort(bucket.begin(), bucket.end());
+    }
+
+    // merge
+    int i = 0;
+    for (auto& bucket : buckets) {
+        for (int num : bucket) {
+            data[i++] = num;
+        }
+    }
+}
 // ---------------------------------------------------------------------------
 // Radix Sort (LSD)
 // ---------------------------------------------------------------------------
@@ -41,12 +72,37 @@ void bucket_sort(std::vector<int>& data, int num_buckets) {
 // ? SEE DIAGRAM: cpp_diagrams.md #6 -- Passes 2-3 (Stability in Action)
 //
 void radix_sort(std::vector<int>& data) {
-    // TODO: Implement radix sort (LSD)
-    //   1. Find the maximum value to determine the number of digits
-    //   2. For each digit position (ones, tens, hundreds, ...):
-    //      a. Use counting sort on that digit
-    //   3. After all digit passes, data is sorted
+    if (data.size() <= 1) return;
+
+    int max_val = *std::max_element(data.begin(), data.end());
+
+    for (int exp = 1; max_val / exp > 0; exp *= 10) {
+        std::vector<int> output(data.size());
+        std::vector<int> count(10, 0);
+
+        // count digits
+        for (int i = 0; i < data.size(); i++) {
+            int digit = (data[i] / exp) % 10;
+            count[digit]++;
+        }
+
+        // prefix sum
+        for (int i = 1; i < 10; i++) {
+            count[i] += count[i - 1];
+        }
+
+        // build output (RIGHT TO LEFT → important!)
+        for (int i = data.size() - 1; i >= 0; i--) {
+            int digit = (data[i] / exp) % 10;
+            output[count[digit] - 1] = data[i];
+            count[digit]--;
+        }
+
+        // copy back
+        data = output;
+    }
 }
+
 
 // ---------------------------------------------------------------------------
 // Utility
